@@ -15,55 +15,8 @@
     <section class="container">
       <div v-if="products.length > 0">
         <ul class="products">
-          <li
-            class="row"
-            v-for="(product, index) in products"
-            :key="product.name"
-          >
-            <div class="col left">
-              <div class="thumbnail">
-                <a href="#">
-                  <img :src="product.image" :alt="product.name" />
-                </a>
-              </div>
-              <div class="detail">
-                <div class="name">
-                  <a href="#">{{ product.name }}</a>
-                </div>
-                <div class="description">{{ product.description }}</div>
-                <div class="price">{{ product.price }}</div>
-              </div>
-            </div>
-
-            <div class="col right">
-              <div class="quantity">
-                <input
-                  type="number"
-                  class="quantity"
-                  step="1"
-                  :value="product.quantity"
-                  @input="updateQuantity(index, $event)"
-                  @blur="checkQuantity(index, $event)"
-                />
-              </div>
-
-              <div class="remove">
-                <svg
-                  @click="removeItem(index)"
-                  version="1.1"
-                  class="close"
-                  x="0px"
-                  y="0px"
-                  viewBox="0 0 60 60"
-                  enable-background="new 0 0 60 60"
-                  xml:space="preserve"
-                >
-                  <polygon
-                    points="38.936,23.561 36.814,21.439 30.562,27.691 24.311,21.439 22.189,23.561 28.441,29.812 22.189,36.064 24.311,38.186 30.562,31.934 36.814,38.186 38.936,36.064 32.684,29.812"
-                  ></polygon>
-                </svg>
-              </div>
-            </div>
+          <li class="row" v-for="product in products" :key="product.name">
+            <product-cart :data="product" @onRemove="removeProduct" />
           </li>
         </ul>
       </div>
@@ -85,16 +38,16 @@
       <div class="summary">
         <ul>
           <li>
-            Subtotal <span>{{ subTotal }}</span>
+            Subtotal <span>{{ displaySubTotal }}</span>
           </li>
           <li v-if="discount > 0">
-            Discount <span>{{ discountPrice }}</span>
+            Discount <span>{{ displayDiscountPrice }}</span>
           </li>
           <li>
-            Tax <span>{{ tax }}</span>
+            Tax <span>{{ displayTax }}</span>
           </li>
           <li class="total">
-            Total <span>{{ totalPrice }}</span>
+            Total <span>{{ displayTotalPrice }}</span>
           </li>
         </ul>
       </div>
@@ -107,27 +60,33 @@
   </div>
 </template>
 <script>
+import ProductCart from './ProductCart.vue'
 export default {
   name: 'cart',
+  components: {
+    ProductCart,
+  },
   data() {
     return {
       products: [
         {
-          image: 'https://via.placeholder.com/200x150',
-          name: 'PRODUCT ITEM NUMBER 1',
-          description: 'Description for product item number 1',
+          id: 1,
+          image:
+            'https://magzentine.com/wp-content/uploads/2021/04/Ez0oHUqXsAELSQa-780x470.jpg',
+          name: 'Shady moon approaching',
+          description: 'Description for product a product with id 1',
           price: 5.99,
           quantity: 2,
         },
         {
-          image: 'https://via.placeholder.com/200x150',
-          name: 'PRODUCT ITEM NUMBER 2',
-          description: 'Description for product item number 1',
+          id: 2,
+          image: 'https://plclagi.com/wp-content/uploads/2020/11/00-8.jpg',
+          name: "L'Art de la peinture",
+          description: "L'Art de la peinture by Johannes Vermeer",
           price: 9.99,
           quantity: 1,
         },
       ],
-      tax: 5,
       promotions: [
         {
           code: 'SUMMER',
@@ -147,6 +106,9 @@ export default {
     }
   },
   computed: {
+    tax() {
+      return this.subTotal / 10
+    },
     itemCount: function() {
       var count = 0
 
@@ -169,34 +131,29 @@ export default {
       return (this.subTotal * this.discount) / 100
     },
     totalPrice: function() {
+      console.log(
+        this.formatCurrency(this.subTotal - this.discountPrice + this.tax)
+      )
       return this.subTotal - this.discountPrice + this.tax
+    },
+    displayTotalPrice() {
+      return this.formatCurrency(this.totalPrice)
+    },
+    displayTax() {
+      return this.formatCurrency(this.tax)
+    },
+    displayDiscountPrice() {
+      return this.formatCurrency(this.discountPrice)
+    },
+    displaySubTotal() {
+      return this.formatCurrency(this.subTotal)
     },
   },
   methods: {
-    updateQuantity: function(index, event) {
-      var product = this.products[index]
-      var value = event.target.value
-      var valueInt = parseInt(value)
-
-      // Minimum quantity is 1, maximum quantity is 100, can left blank to input easily
-      if (value === '') {
-        product.quantity = value
-      } else if (valueInt > 0 && valueInt < 100) {
-        product.quantity = valueInt
-      }
-
-      this.$set(this.products, index, product)
-    },
-    checkQuantity: function(index, event) {
-      // Update quantity to 1 if it is empty
-      if (event.target.value === '') {
-        var product = this.products[index]
-        product.quantity = 1
-        this.$set(this.products, index, product)
-      }
-    },
-    removeItem: function(index) {
-      this.products.splice(index, 1)
+    removeProduct: function(productId) {
+      this.products = this.products.filter((product) => {
+        return product.id !== productId
+      })
     },
     checkPromoCode: function() {
       for (var i = 0; i < this.promotions.length; i++) {
@@ -209,6 +166,15 @@ export default {
       }
 
       alert('Sorry, the Promotional code you entered is not valid!')
+    },
+    formatCurrency(num) {
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+      return formatter.format(num)
     },
   },
 }
@@ -241,12 +207,12 @@ a {
 }
 
 a:hover {
-  color: #f58551;
+  color: #b3e283;
 }
 
 button {
-  background-color: #16cc9b;
-  border: 2px solid #16cc9b;
+  background-color: #e99497;
+  border: 2px solid #e99497;
   color: #ffffff;
   transition: all 0.25s linear;
   cursor: pointer;
@@ -260,8 +226,8 @@ button::after {
 }
 
 button:hover {
-  background-color: #f58551;
-  border-color: #f58551;
+  background-color: #b3e283;
+  border-color: #b3e283;
 }
 
 button:hover::after {
@@ -348,81 +314,6 @@ header .count {
   width: 100%;
 }
 
-.col,
-.quantity,
-.remove {
-  float: left;
-}
-
-.col.left {
-  width: 70%;
-}
-
-.col.right {
-  width: 30%;
-  position: absolute;
-  right: 0;
-  top: calc(50% - 30px);
-}
-
-.detail {
-  padding: 0 0.5rem;
-  line-height: 2.2rem;
-}
-
-.detail .name {
-  font-size: 1.2rem;
-}
-
-.detail .description {
-  color: #7d7d7d;
-  font-size: 1rem;
-}
-
-.detail .price {
-  font-size: 1.5rem;
-}
-
-.quantity,
-.remove {
-  width: 50%;
-  text-align: center;
-}
-
-.remove svg {
-  width: 60px;
-  height: 60px;
-}
-
-.quantity > input {
-  display: inline-block;
-  width: 60px;
-  height: 60px;
-  position: relative;
-  left: calc(50% - 30px);
-  background: #fff;
-  border: 2px solid #ddd;
-  color: #7f7f7f;
-  text-align: center;
-  font: 600 1.5rem Helvetica, Arial, sans-serif;
-}
-
-.quantity > input:hover,
-.quantity > input:focus {
-  border-color: #f58551;
-}
-
-.close {
-  fill: #7d7d7d;
-  transition: color 150ms linear, background-color 150ms linear,
-    fill 150ms linear, 150ms opacity linear;
-  cursor: pointer;
-}
-
-.close:hover {
-  fill: #f58551;
-}
-
 /* --- SUMMARY --- */
 .promotion,
 .summary,
@@ -443,12 +334,12 @@ header .count {
   width: 80%;
   font-size: 1rem;
   padding: 0.5rem 0 0.5rem 1.8rem;
-  border: 2px solid #16cc9b;
+  border: 2px solid #e99497;
   border-radius: 2rem 0 0 2rem;
 }
 
 .promotion:hover > input {
-  border-color: #f58551;
+  border-color: #b3e283;
 }
 
 .promotion > button {
@@ -459,8 +350,8 @@ header .count {
 }
 
 .promotion:hover > button {
-  border-color: #f58551;
-  background-color: #f58551;
+  border-color: #b3e283;
+  background-color: #b3e283;
 }
 
 .promotion > button::after {
