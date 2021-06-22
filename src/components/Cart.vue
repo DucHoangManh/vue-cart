@@ -16,13 +16,13 @@
       <div v-if="products.length > 0">
         <ul class="products">
           <li class="row" v-for="product in products" :key="product.name">
-            <product-cart :data="product" @onRemove="removeProduct" />
+            <CartItem :data="product" @onRemove="removeProduct" />
           </li>
         </ul>
       </div>
       <div v-else class="empty-product">
         <h3>There are no products in your cart.</h3>
-        <button>Shopping now</button>
+        <button @click="revertProducts">Shopping now</button>
       </div>
     </section>
     <!-- End Product List -->
@@ -60,15 +60,15 @@
   </div>
 </template>
 <script>
-import ProductCart from './ProductCart.vue'
+import CartItem from './CartItem.vue'
 export default {
   name: 'cart',
   components: {
-    ProductCart,
+    CartItem,
   },
   data() {
     return {
-      products: [
+      productsOrigin: [
         {
           id: 1,
           image:
@@ -101,9 +101,13 @@ export default {
           discount: '30%',
         },
       ],
+      products: [],
       promoCode: '',
       discount: 0,
     }
+  },
+  mounted() {
+    this.products = this.productsOrigin
   },
   computed: {
     tax() {
@@ -176,6 +180,9 @@ export default {
       })
       return formatter.format(num)
     },
+    revertProducts() {
+      this.products = this.productsOrigin
+    },
   },
 }
 </script>
@@ -183,7 +190,14 @@ export default {
 * {
   box-sizing: border-box;
 }
-
+#CartItem {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
 html {
   font-size: 12px;
 }

@@ -43,17 +43,27 @@
         ></polygon>
       </svg>
     </div>
+    <ConfirmModal
+      v-if="showModal === 1"
+      @closeModal="closeModal"
+      @confirmRemoveItem="confirmRemoveItem"
+    />
   </div>
 </template>
 <script>
+import ConfirmModal from './ConfirmModal.vue'
 export default {
-  name: 'ProductCart',
+  name: 'CartItem',
+  components: {
+    ConfirmModal,
+  },
   props: {
     data: Object,
   },
   data() {
     return {
       product: this.data,
+      showModal: 0,
     }
   },
   computed: {
@@ -75,8 +85,15 @@ export default {
         this.product.quantity = 1
       }
     },
-    removeItem: function() {
+    removeItem() {
+      this.showModal = 1
+    },
+    confirmRemoveItem: function() {
+      this.showModal = 0
       this.$emit('onRemove', this.data.id)
+    },
+    closeModal() {
+      this.showModal = 0
     },
     formatCurrency(num) {
       const formatter = new Intl.NumberFormat('en-US', {
